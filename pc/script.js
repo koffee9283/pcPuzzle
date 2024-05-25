@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded',() => {
     function loading() {
         if (motherOK && imagesOK) {
             const imgWidth = 100;
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
             coordinateTimeX = motherImg.width / 182;
             coordinateTimeY = motherImg.height / 148;
 
-            img.forEach(function(img, index) {
+            img.forEach((img, index) => {
                 // 左右に画像を振り分け初期位置を定める
                 if (index % 2 == 0) {
                     positionX = margin;
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // 各パーツ
-        images.forEach(function(imgObj) {
+        images.forEach((imgObj) => {
         ctx.drawImage(imgObj.image, imgObj.x, imgObj.y);
         });
     }
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isDragging && selectedImage) {
             // ダブりか否かで分岐
             if (duplicateIndices.includes(selectedImage.id)) {
-                deleteDuplicates.forEach(function (duplicate){
+                deleteDuplicates.forEach((duplicate) => {
                     const index = images.findIndex(img => img.id === duplicate);
                     const isCloseEnough = Math.abs(selectedImage.x - images[index].glX) < 50 &&
                                         Math.abs(selectedImage.y - images[index].glY) < 50;
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // カーソル下の画像の説明を代入する
         if (!isDragging) {
-            images.forEach(function(imgObj) {
+            images.forEach((imgObj) => {
                 if (mouseX >= imgObj.x && mouseX <= imgObj.x + imgObj.width &&
                     mouseY >= imgObj.y && mouseY <= imgObj.y + imgObj.height) {
                     displayedName = imgObj.name;
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // motherImg.src = './../images/formermother.png'
     let bgX;    let bgY;
     let motherOK = false;
-    motherImg.onload = function() {
+    motherImg.onload = () => {
         motherOK = true;
     }
     
@@ -323,10 +323,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // 画像を読み込み、初期位置と目標位置を設定
-    imageSources.forEach(function(source, index) {
-        img[index] = new Image();
-        img[index].src = source;
-        img[index].onload = function() {
+    imageSources.forEach((source, index) => {
+        const forimg = new Image();
+        forimg.src = source;
+        forimg.onload = () => {
+            img[index] = forimg
             // すべての画像が読み込まれたか否か
             imagesLoaded++;
             if (imagesLoaded === imageSources.length) {
