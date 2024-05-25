@@ -1,0 +1,20 @@
+.center {
+    text-align: center;
+}
+
+.nav {
+    display: block;
+    padding: 5%;
+    margin: 5%;
+    border: 1px solid #000;
+    background: #cfeafa;
+}
+
+.nav img {
+    margin: 0 5%;
+}
+
+.nav a {
+    display: inline-block;
+    text-decoration: none;
+}
