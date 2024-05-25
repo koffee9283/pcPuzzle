@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded',() => {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const fontSize = 30;
+    const rectMargin = 12;
+    const nameSize = 12;
 
     const componentNames = [];
     componentNames[0] = 'CPU';
@@ -59,6 +61,8 @@ document.addEventListener('DOMContentLoaded',() => {
     const imageSources = Array.from({ length: 10 }, (_, i) => `./../images/part${i}.png`);
 
     let motherImg = null; // マザーボードのオブジェクト
+    const motherName = 'マザーボード';
+    const motherDescription = '様々な部品をつなぐ基盤';
     const motherSource = './../images/mother.png'
 
 
@@ -113,12 +117,10 @@ document.addEventListener('DOMContentLoaded',() => {
             ctx.lineTo(images[i].glX + images[i].width / 2, images[i].glY + images[i].height / 2);
             ctx.stroke();
 
-            const rectMargin = 12;
             const rectColor = (images[i].isPlacedCorrectly) ? '#9FFAFE' : '#CFF16B';
             ctx.fillStyle = rectColor;
             ctx.fillRect(images[i].glX - rectMargin, images[i].glY - rectMargin, images[i].width + rectMargin, images[i].height + rectMargin)
 
-            const nameSize = 12;
             ctx.font = `${nameSize}px Arial`;
             ctx.fillStyle = '#7A0A2A';
             ctx.textAlign = 'start';
@@ -201,8 +203,8 @@ document.addEventListener('DOMContentLoaded',() => {
                                       Math.abs(selectedImage.y - selectedImage.glY) < 50;
                 if (isCloseEnough) {
                     // スナップ処理
-                    selectedImage.x = selectedImage.glX;
-                    selectedImage.y = selectedImage.glY;
+                    selectedImage.x = selectedImage.glX - rectMargin / 2;
+                    selectedImage.y = selectedImage.glY - rectMargin / 2;
                     selectedImage.isStuckPiece = true;
                     selectedImage.isPlacedCorrectly = true;
                     images.splice(images.length - 1, 1); // 現在の位置から画像を削除

@@ -1,27 +1,23 @@
 html, body {
     height: 100%;
     margin: 0;
+    font-family: Arial, sans-serif;
 }
 
 .wrapper {
-    display: grid;
-    grid-template-rows: 1fr auto;
-    min-height: 100%;
-}
-
-footer {
-    margin-right: 50px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 .center {
     text-align: center;
 }
 
-.right {
-    text-align: right;
-}
 .nav {
-    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 5%;
     margin: 5%;
     border: 1px solid #000;
@@ -35,4 +31,9 @@ footer {
 .nav a {
     display: inline-block;
     text-decoration: none;
+}
+
+footer {
+    margin-right: 50px;
+    text-align: right;
 }
