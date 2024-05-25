@@ -1,61 +1,102 @@
 document.addEventListener('DOMContentLoaded',() => {
-    function loading() {
-        if (motherOK && imagesOK) {
-            const imgWidth = 100;
-            const imgHeight = 100;
-            const margin = 10;
-            const padding = 72; // canvas左右のゆとり幅
-            let positionX;
-            let positionY;
+    // declarations-----------------------------------------------------------------
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const fontSize = 30;
 
-            bgX = (screen.width - motherImg.width) / 2;
-            bgY = (screen.height - motherImg.height) / 3;
+    const componentNames = [];
+    componentNames[0] = 'CPU';
+    componentNames[1] = 'CPUファン';
+    componentNames[2] = 'GPU';
+    componentNames[3] = 'HDD';
+    componentNames[4] = 'ヒートシンク';
+    componentNames[5] = 'メモリ';
+    componentNames[6] = 'メモリ';
+    componentNames[7] = 'DVD(BD)プレイヤー';
+    componentNames[8] = '電源';
+    componentNames[9] = 'SSD';
 
-            coordinateTimeX = motherImg.width / 182;
-            coordinateTimeY = motherImg.height / 148;
+    // motherImg(bgX,bgY)からみた相対的座標
+    // 目標範囲の描画座標
+    const targetCoordsX = [];       const targetCoordsY = [];
+    targetCoordsX[0] = 210;         targetCoordsY[0] = -80;
+    targetCoordsX[1] = 353;         targetCoordsY[1] = -100;
+    targetCoordsX[2] = 23;          targetCoordsY[2] = -100;
+    targetCoordsX[3] = -97;         targetCoordsY[3] = 330;
+    targetCoordsX[4] = -127;        targetCoordsY[4] = 162;
+    targetCoordsX[5] = 373;         targetCoordsY[5] = 40;
+    targetCoordsX[6] = 373;         targetCoordsY[6] = 200;
+    targetCoordsX[7] = 63;          targetCoordsY[7] = 330;
+    targetCoordsX[8] = -200;        targetCoordsY[8] = -38;
+    targetCoordsX[9] = 223;         targetCoordsY[9] = 330;
 
-            img.forEach((img, index) => {
-                // 左右に画像を振り分け初期位置を定める
-                if (index % 2 == 0) {
-                    positionX = margin;
-                    positionY = index / 2 * (imgHeight + margin) + padding;
-                } else {
-                    positionX = screen.width - (imgWidth + margin);
-                    positionY = Math.floor(index / 2) * (imgHeight + margin) + padding;
-                }
+    // 引き出し線の始点
+    const lineStartCoordsX = [];      const lineStartCoordsY = [];
+    lineStartCoordsX[0] = 48;        lineStartCoordsY[0] = 2;
+    lineStartCoordsX[1] = 48;        lineStartCoordsY[1] = 2;
+    lineStartCoordsX[2] = -28;       lineStartCoordsY[2] = -23;
+    lineStartCoordsX[3] = -60;       lineStartCoordsY[3] = 67;
+    lineStartCoordsX[4] = -68;       lineStartCoordsY[4] = 42;
+    lineStartCoordsX[5] = 67;        lineStartCoordsY[5] = 42;
+    lineStartCoordsX[6] = 67;        lineStartCoordsY[6] = 65;
+    lineStartCoordsX[7] = -60;       lineStartCoordsY[7] = 67;
+    lineStartCoordsX[8] = -83;       lineStartCoordsY[8] = -7;
+    lineStartCoordsX[9] = -60;       lineStartCoordsY[9] = 67;
 
-                //画像や座標のオブジェクト生成
-                images.push({
-                    id: index,
-                    image: img,
-                    name: imageName[index],
-                    x: positionX, y: positionY,
-                    glX: bgX + goalX[index], glY: bgY + goalY[index],
-                    lineX: coordinateTimeX * startLineX[index],
-                    lineY: coordinateTimeY * startLineY[index],
-                    width: img.width, height: img.height,
-                    description: imageDescriptions[index],
-                    isStuckPiece: false,
-                    isPlacedCorrectly: false
-                });
-            });
+    const imageDescriptions = [];
+    imageDescriptions[0] = 'パソコンの演算装置、人間で例えると脳'
+    imageDescriptions[1] = 'CPUを冷やす部品'
+    imageDescriptions[2] = '映像を処理する部品'
+    imageDescriptions[3] = 'データを保存する記憶装置'
+    imageDescriptions[4] = '熱を逃がす部品'
+    imageDescriptions[5] = '作業に必要なデータを並べる、主記憶装置'
+    imageDescriptions[6] = '作業に必要なデータを並べる、主記憶装置'
+    imageDescriptions[7] = 'DVDやBDを再生する装置'
+    imageDescriptions[8] = '電気を変換して供給する装置'
+    imageDescriptions[9] = '従来より高速な記憶装置'
 
-            clearInterval(ready); //ループ解除
-            resizeCanvas(); // canvasSizeをwindowSizeに合わせる
-            canvas.addEventListener('mousedown', handleMouseDown);
-            canvas.addEventListener('mouseup', handleMouseUp);
-            canvas.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('resize', resizeCanvas);
-        }
+    const images = []; // 画像情報のオブジェクト
+    const imageSources = Array.from({ length: 10 }, (_, i) => `./../images/part${i}.png`);
+
+    let motherImg = null; // マザーボードのオブジェクト
+    const motherSource = './../images/mother.png'
+
+
+    let canvasOffset = canvas.getBoundingClientRect();
+    let isDragging = false;
+    let selectedImage = null;
+    let displayedName = null;
+    let displayedDescription = null;
+    let allPlacedCorrectly = false;
+
+    // 要素の出現回数をカウント
+    const elementCount = componentNames.reduce((acc, element) => {
+        acc[element] = (acc[element] || 0) + 1;
+        return acc;
+    }, {});
+
+    // 2回以上出現する要素のインデックスを抽出
+    const duplicateIndices = componentNames
+        .map((element, index) => (elementCount[element] > 1 ? index : -1))
+        .filter(index => index !== -1);
+
+    let deleteDuplicates = duplicateIndices;
+
+    // functions--------------------------------------------------------------------
+    function loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = (e) => reject(e);
+            img.src = src;
+        });
     }
 
     function drawImages() {
-        if (!(motherOK && imagesOK)) return;
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // 上部の説明文
-        ctx.font = fontSize + 'px Arial';
+        ctx.font = `${fontSize}px Arial`;
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
         ctx.fillText('パーツをドラッグしてPCを完成させよう', canvas.width / 2, fontSize + 12);
@@ -78,7 +119,7 @@ document.addEventListener('DOMContentLoaded',() => {
             ctx.fillRect(images[i].glX - rectMargin, images[i].glY - rectMargin, images[i].width + rectMargin, images[i].height + rectMargin)
 
             const nameSize = 12;
-            ctx.font = nameSize + 'px Arial';
+            ctx.font = `${nameSize}px Arial`;
             ctx.fillStyle = '#7A0A2A';
             ctx.textAlign = 'start';
             ctx.fillText(images[i].name, images[i].glX - rectMargin, images[i].glY - rectMargin);    
@@ -94,7 +135,7 @@ document.addEventListener('DOMContentLoaded',() => {
 
         // 名前と説明
         if (displayedDescription && !allPlacedCorrectly) {
-            ctx.font = fontSize+'px Arial';
+            ctx.font = `${fontSize}px Arial`;
             ctx.fillStyle = 'black';
             ctx.textAlign = 'start';
             ctx.fillText(displayedName+'：'+displayedDescription, 10, canvas.height - 24);
@@ -102,7 +143,7 @@ document.addEventListener('DOMContentLoaded',() => {
 
         // 完成メッセージ
         if (allPlacedCorrectly) {
-            ctx.font = fontSize+'px Arial';
+            ctx.font = `${fontSize}px Arial`;
             ctx.fillStyle = '#FF3F35';
             ctx.textAlign = 'center';
             ctx.fillText('完成！おめでとう！', canvas.width / 2, canvas.height - 24);
@@ -222,119 +263,53 @@ document.addEventListener('DOMContentLoaded',() => {
     }
 
     // Start of processing-------------------------------------------------------
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    Promise.all([...imageSources, motherSource].map(loadImage)).then(img => {
+        motherImg = img.pop();
+        const imgWidth = 100;
+        const imgHeight = 100;
+        const margin = 10;
+        const padding = 72; // canvas左右のゆとり幅
+        const coordinateTimeX = motherImg.width / 182;
+        const coordinateTimeY = motherImg.height / 148;
 
-    let canvasOffset = canvas.getBoundingClientRect();
-    let isDragging = false;
-    let selectedImage = null;
-    let displayedName = null;
-    let displayedDescription = null;
-    let allPlacedCorrectly = false;
-    const fontSize = 30;
+        bgX = (screen.width - motherImg.width) / 2;
+        bgY = (screen.height - motherImg.height) / 3;
 
-    const imageName = [];
-    imageName[0] = 'CPU';
-    imageName[1] = 'CPUファン';
-    imageName[2] = 'GPU';
-    imageName[3] = 'HDD';
-    imageName[4] = 'ヒートシンク';
-    imageName[5] = 'メモリ';
-    imageName[6] = 'メモリ';
-    imageName[7] = 'DVD(BD)プレイヤー';
-    imageName[8] = '電源';
-    imageName[9] = 'SSD';
-
-    // 要素の出現回数をカウント
-    const elementCount = imageName.reduce((acc, element) => {
-        acc[element] = (acc[element] || 0) + 1;
-        return acc;
-    }, {});
-
-    // 2回以上出現する要素のインデックスを抽出
-    const duplicateIndices = imageName
-        .map((element, index) => (elementCount[element] > 1 ? index : -1))
-        .filter(index => index !== -1);
-
-    let deleteDuplicates = duplicateIndices;
-
-    // motherImg(bgX,bgY)からみた相対的座標
-    // 目標範囲の描画座標
-    const goalX = [];       const goalY = [];
-    goalX[0] = 210;         goalY[0] = -80;
-    goalX[1] = 353;         goalY[1] = -100;
-    goalX[2] = 23;          goalY[2] = -100;
-    goalX[3] = -97;         goalY[3] = 330;
-    goalX[4] = -127;        goalY[4] = 162;
-    goalX[5] = 373;         goalY[5] = 40;
-    goalX[6] = 373;         goalY[6] = 200;
-    goalX[7] = 63;          goalY[7] = 330;
-    goalX[8] = -200;        goalY[8] = -38;
-    goalX[9] = 223;         goalY[9] = 330;
-
-    // 引き出し線の始点
-    const startLineX = [];      const startLineY = [];
-    startLineX[0] = 48;        startLineY[0] = 2;
-    startLineX[1] = 48;        startLineY[1] = 2;
-    startLineX[2] = -28;       startLineY[2] = -23;
-    startLineX[3] = -60;       startLineY[3] = 67;
-    startLineX[4] = -68;       startLineY[4] = 42;
-    startLineX[5] = 67;        startLineY[5] = 42;
-    startLineX[6] = 67;        startLineY[6] = 65;
-    startLineX[7] = -60;       startLineY[7] = 67;
-    startLineX[8] = -83;       startLineY[8] = -7;
-    startLineX[9] = -60;       startLineY[9] = 67;
-
-    let coordinateTimeX = null;
-    let coordinateTimeY = null;
-
-    const imageDescriptions = [];
-    imageDescriptions[0] = 'パソコンの演算装置、人間で例えると脳'
-    imageDescriptions[1] = 'CPUを冷やす部品'
-    imageDescriptions[2] = '映像を処理する部品'
-    imageDescriptions[3] = 'データを保存する記憶装置'
-    imageDescriptions[4] = '熱を逃がす部品'
-    imageDescriptions[5] = '作業に必要なデータを並べる、主記憶装置'
-    imageDescriptions[6] = '作業に必要なデータを並べる、主記憶装置'
-    imageDescriptions[7] = 'DVDやBDを再生する装置'
-    imageDescriptions[8] = '電気を変換して供給する装置'
-    imageDescriptions[9] = '従来より高速な記憶装置'
-
-    // motherboard Setting
-    let motherImg = new Image();
-    const motherName = 'マザーボード';
-    const motherDescription = '様々な部品をつなぐ基盤';
-    motherImg.src = './../images/mother.png'
-    // motherImg.src = './../images/formermother.png'
-    let bgX;    let bgY;
-    let motherOK = false;
-    motherImg.onload = () => {
-        motherOK = true;
-    }
-    
-    const img = [];
-    let images = []; // 画像オブジェクト
-    const imageSources = []; // 画像のパス
-    let imagesLoaded = 0; // 読み込み完了した画像数
-    let imagesOK = false;
-    for (let i = 0; i < 10; i++) {
-        imageSources[i] = './../images/part' + i + '.png';
-    }
-
-
-    // 画像を読み込み、初期位置と目標位置を設定
-    imageSources.forEach((source, index) => {
-        const forimg = new Image();
-        forimg.src = source;
-        forimg.onload = () => {
-            img[index] = forimg
-            // すべての画像が読み込まれたか否か
-            imagesLoaded++;
-            if (imagesLoaded === imageSources.length) {
-                imagesOK = true;
+        img.forEach((img, index) => {
+            let positionX, positionY;
+            // 左右に画像を振り分け初期位置を定める
+            if (index % 2 == 0) {
+                positionX = margin;
+                positionY = index / 2 * (imgHeight + margin) + padding;
+            } else {
+                positionX = screen.width - (imgWidth + margin);
+                positionY = Math.floor(index / 2) * (imgHeight + margin) + padding;
             }
-        };
-    });
 
-    const ready = setInterval(loading,1); // 全画像の読み込みが終わるまでloadingを呼び出す
+            //画像や座標のオブジェクト生成
+            images.push({
+                id: index,
+                image: img,
+                name: componentNames[index],
+                x: positionX, y: positionY,
+                glX: bgX + targetCoordsX[index], glY: bgY + targetCoordsY[index],
+                lineX: coordinateTimeX * lineStartCoordsX[index],
+                lineY: coordinateTimeY * lineStartCoordsY[index],
+                width: img.width, height: img.height,
+                description: imageDescriptions[index],
+                isStuckPiece: false,
+                isPlacedCorrectly: false
+            });
+        });
+
+        resizeCanvas(); // canvasSizeをwindowSizeに合わせる
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('resize', resizeCanvas);
+
+    }).catch(error => {
+        console.error('Failed to load some images', error);
+        alert('Failed to load some images')
+    });
 });
