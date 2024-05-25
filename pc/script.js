@@ -144,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const index = images.findIndex(img => img.id === duplicate);
                     const isCloseEnough = Math.abs(selectedImage.x - images[index].glX) < 50 &&
                                         Math.abs(selectedImage.y - images[index].glY) < 50;
-                                        console.log(images[index].id);
                     if (isCloseEnough) {
                         // スナップ処理
                         selectedImage.x = images[index].glX;
@@ -152,8 +151,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         selectedImage.isStuckPiece = true;
                         images[index].isPlacedCorrectly = true;
                         deleteDuplicates = duplicateIndices.filter(duplicate => duplicate !== images[index].id);
-                        console.log(images[index].id);
-                        console.log(duplicateIndices);
+                        images.splice(images.length - 1, 1); // 現在の位置から画像を削除
+                        images.unshift(selectedImage); // 画像を配列の最後に追加    
                     }
                 });
             } else { // 従来の処理
@@ -165,16 +164,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectedImage.y = selectedImage.glY;
                     selectedImage.isStuckPiece = true;
                     selectedImage.isPlacedCorrectly = true;
+                    images.splice(images.length - 1, 1); // 現在の位置から画像を削除
+                    images.unshift(selectedImage); // 画像を配列の最後に追加
                 }
             }
 
             // 全て配置できたか判定
             allPlacedCorrectly = images.every(img => img.isStuckPiece);
         }
-    
+
         isDragging = false;
         selectedImage = null;
-    
+
         drawImages();
     }
 
@@ -249,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
         acc[element] = (acc[element] || 0) + 1;
         return acc;
     }, {});
-    
+
     // 2回以上出現する要素のインデックスを抽出
     const duplicateIndices = imageName
         .map((element, index) => (elementCount[element] > 1 ? index : -1))
