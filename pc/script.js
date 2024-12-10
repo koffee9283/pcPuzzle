@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded',() => {
+        // 既存のスクリプトの後に以下を追加
+        const resetButton = document.getElementById('reset-button');
+        const indexButton = document.getElementById('index-button');
+    
+        // ページをリセットする機能
+        resetButton.addEventListener('click', () => {
+            location.reload(); // ページをリロード
+        });
+    
+        // index.html に遷移する機能
+        indexButton.addEventListener('click', () => {
+            window.location.href = 'index.html'; // index.html に移動
+        });
+    });
+    
     // declarations-----------------------------------------------------------------
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -314,4 +329,5 @@ document.addEventListener('DOMContentLoaded',() => {
         console.error('Failed to load some images', error);
         alert('Failed to load some images')
     });
-});
+
+    
